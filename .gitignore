@@ -6,4 +6,5 @@ __pycache__/
 .pytest_cache/
 *.csv
 data/*.csv
-EOFs
+EOFs.DS_Store
+.idea/
