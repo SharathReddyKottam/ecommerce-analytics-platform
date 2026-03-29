@@ -1,0 +1,9 @@
+cat > .gitignore << 'EOF'
+.env
+PRIVATE_NOTES.md
+__pycache__/
+*.pyc
+.pytest_cache/
+*.csv
+data/*.csv
+EOFs
