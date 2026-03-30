@@ -19,6 +19,16 @@ def get_snowflake_connection():
 
 def load_raw_to_snowflake():
     print("Loading raw data to Snowflake...")
+    conn = get_snowflake_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM RAW_TRANSACTIONS")
+    count = cursor.fetchone()[0]
+
+    if count > 0:
+        print(f"RAW_TRANSACTIONS already has {count} rows, skipping upload!")
+        conn.close()
+        return
+
     df = pd.read_csv('data/data.csv', encoding='latin-1')
     df.columns = df.columns.str.upper().str.replace(' ', '_')
     df = df.rename(columns={
@@ -28,7 +38,6 @@ def load_raw_to_snowflake():
         'UNITPRICE': 'UNIT_PRICE',
         'CUSTOMERID': 'CUSTOMER_ID'
     })
-    conn = get_snowflake_connection()
     write_pandas(conn, df, 'RAW_TRANSACTIONS')
     conn.close()
     print(f"Loaded {len(df)} rows to Snowflake RAW_TRANSACTIONS!")
@@ -80,7 +89,17 @@ def load_to_snowflake_cleaned(df):
 
 def load_to_postgres(df):
     print("Loading to PostgreSQL...")
-    db_url = f"postgresql://{os.getenv('POSTGRES_USER')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+    user = os.getenv('POSTGRES_USER', 'postgres')
+    password = os.getenv('POSTGRES_PASSWORD', 'postgres')
+    host = os.getenv('POSTGRES_HOST', 'localhost')
+    port = os.getenv('POSTGRES_PORT', '5432')
+    db = os.getenv('POSTGRES_DB', 'ecommerce_db')
+
+    if password:
+        db_url = f"postgresql://{user}:{password}@{host}:{port}/{db}"
+    else:
+        db_url = f"postgresql://{user}@{host}:{port}/{db}"
+
     engine = create_engine(db_url)
     df.columns = df.columns.str.lower()
     df.to_sql('cleaned_transactions', engine, if_exists='replace', index=False)

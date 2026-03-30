@@ -10,7 +10,17 @@ load_dotenv()
 app = FastAPI(title="E-Commerce Analytics API")
 
 def get_engine():
-    db_url = f"postgresql://{os.getenv('POSTGRES_USER')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+    user = os.getenv('POSTGRES_USER', 'postgres')
+    password = os.getenv('POSTGRES_PASSWORD', 'postgres')
+    host = os.getenv('POSTGRES_HOST', 'localhost')
+    port = os.getenv('POSTGRES_PORT', '5432')
+    db = os.getenv('POSTGRES_DB', 'ecommerce_db')
+
+    if password:
+        db_url = f"postgresql://{user}:{password}@{host}:{port}/{db}"
+    else:
+        db_url = f"postgresql://{user}@{host}:{port}/{db}"
+
     return create_engine(db_url)
 
 @app.get("/health")
