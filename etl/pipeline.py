@@ -45,7 +45,19 @@ def load_raw_to_snowflake():
 def extract_from_snowflake():
     print("Extracting from Snowflake...")
     conn = get_snowflake_connection()
-    df = pd.read_sql("SELECT * FROM RAW_TRANSACTIONS", conn)
+
+    # Process in chunks to avoid memory issues
+    query = """
+            SELECT INVOICE_NO, STOCK_CODE, DESCRIPTION,
+                   QUANTITY, INVOICE_DATE, UNIT_PRICE,
+                   CUSTOMER_ID, COUNTRY
+            FROM CLEANED_TRANSACTIONS
+            WHERE CUSTOMER_ID IS NOT NULL
+              AND QUANTITY > 0
+              AND UNIT_PRICE > 0
+                LIMIT 100000 \
+            """
+    df = pd.read_sql(query, conn)
     conn.close()
     print(f"Extracted {len(df)} rows from Snowflake")
     return df
@@ -107,10 +119,9 @@ def load_to_postgres(df):
 
 def run_pipeline():
     print("Starting ETL pipeline...")
-    load_raw_to_snowflake()
+    # Skip load_raw_to_snowflake - already uploaded!
     df = extract_from_snowflake()
     df = transform_data(df)
-    load_to_snowflake_cleaned(df)
     load_to_postgres(df)
     print("Pipeline completed successfully!")
 
