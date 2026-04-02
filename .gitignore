@@ -8,3 +8,5 @@ __pycache__/
 data/*.csv
 EOFs.DS_Store
 .idea/
+ecommerce-key.pem
+.DS_Store
